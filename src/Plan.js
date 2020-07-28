@@ -195,8 +195,8 @@ const mockFlagData = {
     inCompatibleWith: [],
   },
   FightingLogic: {
-    name: "Fighting",
-    showFlag: true,
+    name: "FightingLogic",
+    showFlag: false,
     overrideStats: null,
     modifiers: null,
     check: null,
