@@ -1,99 +1,72 @@
 import React from "react";
-import Constants from "./Constants";
-// const unitStates = {
-//   HUNTING: "hunting",
-//   FIGHTING: "fighting",
-//   RETURNING: "returning",
-//   RECOVERING: "recovering",
-//   IDLE: "idle",
-// };
-
-// function tempCreateNode(flags = []) {
-//   return {
-//     id: 1,
-//     x: 0,
-//     y: 0,
-//     team: 1,
-//     state: "default",
-//     flags,
-//     tracking: {},
-//     data: {},
-//   };
-// }
+import NodeClass from "./NodeClass";
 
 class Game extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      nodes: [tempCreateNode(["isUnit", "Fearless"])],
+      nodes: [],
     };
   }
 
   componentDidMount() {
-    this.state.nodes.map((node) => {
-      this.NodeHelpers().tick(node.id);
+    this.setState({
+      nodes: [
+        new NodeClass(this.Board, 1, ["isSoilder"], 1),
+        new NodeClass(this.Board, 2, ["isSoilder"]),
+      ],
     });
+    // this.Board().addNewNode(1, ["isSoilder"]);
+    // this.Board().addNewNode(2, ["isSoilder"]);
+    // this.Board().addNewNode(2, ["isSoilder"]);
+
+    // console.log(this.state.nodes);
+
+    setInterval(() => {
+      this.state.nodes.map((node) => {
+        if (!node.initialized) {
+          node.initialize();
+        }
+        // Verify node still exist before trying to perform logic with it
+        if (this.Board().getNode(node.id)) node.tick();
+      });
+    }, 1000);
   }
 
-  NodeHelpers = () => {
+  Board = () => {
     return {
+      getAllNodes: () => {
+        return this.state.nodes;
+      },
       getNode: (id) => {
         const index = this.state.nodes.findIndex((node) => node.id == id);
-        return { ...this.state.nodes[index], index };
+        return this.state.nodes[index];
       },
-      setProp: (id, path, value, setRelativeNum = false) => {
-        let node = this.NodeHelper().getNode(id);
-        const setToValue = (obj, path, value) => {
-          var i;
-          path = path.split(".");
-          for (i = 0; i < path.length - 1; i++) {
-            if (obj[path[i]]) {
-              obj = obj[path[i]];
-            } else {
-              obj[path[i]] = {};
-              obj = obj[path[i]];
-            }
-          }
-
-          if (
-            setRelativeNum &&
-            typeof obj[path[i]] == "number" &&
-            !isNaN(Number(value))
-          ) {
-            obj[path[i]] += Number(value);
-          } else {
-            obj[path[i]] = value;
-          }
-        };
-        setToValue(node, path, value);
-      },
-      tick: (id) => {
-        node = this.NodeHelper().populate(node.id);
-        const stateActions = node.flags.filter((flag) => {
-          if (
-            flag.events &&
-            flag.events.stateActions &&
-            flag.events.stateActions[node.state]
-          ) {
-            return true;
-          }
+      addNewNode: (team, flags = [], id) => {
+        this.setState({
+          // nodes: [...this.state.nodes, { id: Math.round(Math.random() * 100) }],
+          nodes: [
+            ...this.state.nodes,
+            new NodeClass(this.Board, team, flags),
+            id,
+          ],
         });
-        for (var i = 0; i < stateActions.length; i++) {
-          stateActions[i].events.stateActions[node.state]();
+      },
+      applyNode: (id, newNode) => {
+        let nodes = this.state.nodes;
+        let index = nodes.findIndex((node) => node.id == newNode.id);
+        if (index !== -1) {
+          nodes[index] = newNode;
+          this.setState({ nodes });
         }
       },
-      populate: (id) => {
-        let node = this.NodeHelper().getNode(id);
-        node.flags = node.flags.map((id) => Constants.Flags[id]);
-        return node;
-      },
       getDistanceBetween: (id1, id2) => {
-        const node1 = this.NodeHelper().getNode(id1);
-        const node2 = this.NodeHelper().getNode(id2);
+        const node1 = this.Board().getNode(id1);
+        const node2 = this.Board().getNode(id2);
         if (node1.index !== -1 && node2.index !== -1) {
-          return this.NodeHelper().pythagoreanTheorem(
-            { x: node1.x, y: node1.y },
-            { x: node2.x, y: node2.y }
+          return this.Board().pythagoreanTheorem(
+            node1.position,
+            node2.position
           );
         }
       },
@@ -102,6 +75,11 @@ class Game extends React.Component {
         const b = point1.y - point2.y;
         const c = Math.round(Math.sqrt(a * a + b * b));
         return c;
+      },
+      deleteNode: (id) => {
+        this.setState({
+          nodes: this.state.nodes.filter((node) => node.id != id),
+        });
       },
     };
   };

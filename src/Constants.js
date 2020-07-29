@@ -1,62 +1,130 @@
-export default {
-  Flags: {
-    Coward: {
-      name: "Coward",
-      showFlag: true,
-      overrideStats: { fleeAt: 0.8 },
-      modifiers: { actionPoints: "*2" },
-      check: (unit) => {
-        // Check if unit meets requirements to have this flag.
-        // if unit has fled 100% of battles and has participated in more then 5 battles
+const Flags = {
+  actionPointSystem: {
+    name: "actionPointSystem",
+    showFlag: true,
+    overrideStats: null,
+    modifiers: null,
+    check: null,
+    // inCompatibleWith: [],
+    required: [],
+    events: {
+      stateActions: {
+        actionPointsExhausted: () => {},
       },
-      inCompatibleWith: [2],
-      events: null,
-    },
-    Fearless: {
-      name: "Fearless",
-      showFlag: true,
-      isState: false,
-      overrideStats: { fleeAt: 0.2 },
-      modifiers: { actionPoints: "*4" },
-      check: (unit) => {
-        // Check if unit meets requirements to have this flag.
-        // if unit has not fled 100% of battles and has participated in more then 15 battles
+      onFlagApplied: (Board, node) => {
+        node.setProp("data.core.actionPoints", {
+          current: 2,
+          maxPoints: 2,
+          returnToState: null,
+        });
       },
-      inCompatibleWith: [1],
-      events: null,
+      onFlagRemoved: (Board, node) => {
+        node.setProp("data.core.actionPoints", null);
+      },
+      // startOfTurn: (Board, node) => {},
+      // endOfTurn: (Board, node) => {},
     },
-    isUnit: {
-      name: "isUnit",
-      showFlag: true,
-      overrideStats: null,
-      modifiers: null,
-      check: null,
-      inCompatibleWith: [],
-      events: {
-        stateActions: {
-          default: (game, unit, flag, flagList) => {
-            console.log("DOOP");
-          },
+  },
+  isKillable: {
+    name: "isUnit",
+    showFlag: true,
+    overrideStats: null,
+    modifiers: null,
+    check: null,
+    required: ["actionPointSystem"],
+    events: {
+      onFlagApplied: (Board, node) => {
+        node.setProp("data.core.health", 100);
+      },
+      onAttacked: (Board, node) => {
+        console.log(node.data.core.health);
+        if (node.data.core.health <= 0) {
+          Board().deleteNode(node.id);
+        }
+      },
+    },
+  },
+  isUnit: {
+    name: "isUnit",
+    showFlag: true,
+    overrideStats: null,
+    modifiers: null,
+    check: null,
+    required: ["isKillable", "actionPointSystem"],
+    events: {
+      onFlagApplied: (Board, node) => {
+        node.setProp("data.core", { weapon: "bareHands", target: null }, true);
+      },
+    },
+  },
+  isSoilder: {
+    name: "isSoilder",
+    showFlag: true,
+    overrideStats: null,
+    modifiers: null,
+    check: null,
+    required: ["actionPointSystem", "isUnit"],
+    events: {
+      stateActions: {
+        // Required Actions
+        soilderRoaming: (Board, node) => {
+          const allNodes = Board().getAllNodes();
+          const enemySoildersByDistance = allNodes
+            .filter(
+              (enemy) => enemy.team != node.team && enemy.hasFlag("isSoilder")
+            )
+            .sort(
+              (a, b) =>
+                Board().pythagoreanTheorem(node.position, a.position) -
+                Board().pythagoreanTheorem(node.position, b.position)
+            );
+          if (enemySoildersByDistance.length > 0) {
+            const target = enemySoildersByDistance[0];
+            node.setProp("data.core.target", target.id);
+            node.setProp("state", "soilderHunting");
+          }
+        },
+        soilderHunting: (Board, node) => {
+          // If we have a target, and target exist.
+          if (
+            node.data.core.target !== undefined &&
+            Board().getNode(node.data.core.target)
+          ) {
+            // const target = Board().getNode(node.data.core.target);
+            // If within range, attack
+            if (
+              Board().getDistanceBetween(node.id, node.data.core.target) <=
+              Weapons[node.data.core.weapon || "bareHands"].range
+            ) {
+              node.attack(
+                node.data.core.target,
+                Weapons[node.data.core.weapon].damage
+              );
+              // console.log(node.id, "HUNTING.IN_RANGE && ATTACKING");
+            }
+          } else {
+            node.setProp("data.core.target", null);
+            node.setProp("state", "soilderRoaming");
+          }
+        },
+        soilderReturning: (Board, node) => {},
+        default: (Board, node) => {
+          node.setProp("state", "soilderRoaming");
         },
       },
     },
-    // FightingLogic: {
-    //   name: "FightingLogic",
-    //   showFlag: false,
-    //   overrideStats: null,
-    //   modifiers: null,
-    //   check: null,
-    //   inCompatibleWith: null,
-    //   events: {
-    //     stateActions: {
-    //       fighting: (game, unit) => {
-    //         // console.log("Do something!");
-    //       },
-    //     },
-    //     // afterTurn: null,
-    //     // beforeTurn: null,
-    //     // onAttack: null,
-    //   },
-    // },
   },
 };
+
+const Weapons = {
+  bareHands: {
+    name: "Bare Hands",
+    range: 0,
+    damage: 30,
+    hasProjectile: false,
+    canReceiveFlags: false,
+    flags: [],
+  },
+};
+
+export default { Flags, Weapons };

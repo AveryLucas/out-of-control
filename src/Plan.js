@@ -172,6 +172,7 @@ const unitTitles = [
 
 const mockFlagData = {
   Coward: {
+    id: 1,
     name: "Coward",
     showFlag: true,
     overrideStats: { fleeAt: 0.8 },
@@ -180,9 +181,10 @@ const mockFlagData = {
       // Check if unit meets requirements to have this flag.
       // if unit has fled 100% of battles and has participated in more then 5 battles
     },
-    inCompatibleWith: [],
+    inCompatibleWith: [2],
   },
   Fearless: {
+    id: 2,
     name: "Fearless",
     showFlag: true,
     isState: false,
@@ -192,9 +194,10 @@ const mockFlagData = {
       // Check if unit meets requirements to have this flag.
       // if unit has not fled 100% of battles and has participated in more then 15 battles
     },
-    inCompatibleWith: [],
+    inCompatibleWith: [1],
   },
   FightingLogic: {
+    id: 3,
     name: "FightingLogic",
     showFlag: false,
     overrideStats: null,
@@ -217,3 +220,34 @@ const unitStates = {
   // RECOVERING: "recovering",
   // FLEEING: "fleeing", Out of Scope
 };
+
+// Everythings a unit and everythings a building? Whats a node?
+const node = {
+  id: 0,
+  flags: [{ FightingLogic: 3 }],
+  x: 0,
+  y: 0,
+  health: 100,
+  team: "blue",
+  state: "default",
+  data: {},
+};
+
+// id: Math.floor(Math.random() * 100),
+// x: 0,
+// y: 0,
+// health: 30,
+// team,
+// target: null,
+// returningTo: null,
+// isInBuilding: false,
+// currentBuilding: false,
+// actionPoints: 2,
+// speed: 4,
+// cooldown: 5,
+// weapon: 0,
+// returnAt: 0.5,
+// // fleeAt: 0.2,
+// maxActionPoints: 2,
+// maxCooldownTime: 2,
+// maxResetTime: 10,
