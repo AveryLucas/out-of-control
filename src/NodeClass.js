@@ -2,6 +2,7 @@ import Constants from "./Constants";
 
 class Node {
   constructor(Board, team = 0, flags = [], id) {
+    this.prev = null;
     this.Board = Board;
     this.id = id || Math.round(Math.random() * 1000);
     this.position = { x: 0, y: 0 };
@@ -18,7 +19,7 @@ class Node {
       this.addFlag(this.data.flags[i]);
     }
     this.initialized = true;
-    console.log("Init");
+    // console.log("Init");
   };
 
   triggerEvent = (event) => {
@@ -47,6 +48,22 @@ class Node {
     });
     for (var i = 0; i < stateActions.length; i++) {
       stateActions[i].events.stateActions[this.state](this.Board, this);
+    }
+  };
+
+  triggerOnChangeEvents = (path, current, previous) => {
+    const populatedFlags = this.getPopulatedFlags();
+    const onPropChangeFlags = populatedFlags.filter((flag) => {
+      if (
+        flag.events &&
+        flag.events.onPropChanged &&
+        flag.events.onPropChanged.path == path
+      ) {
+        return true;
+      }
+    });
+    for (var i = 0; i < onPropChangeFlags.length; i++) {
+      onPropChangeFlags[i].events.onPropChanged.do(current, previous);
     }
   };
 
@@ -84,42 +101,14 @@ class Node {
   };
 
   setProp = (path, value, setRelative = false) => {
-    // console.log(value);
     let obj = this;
-    const setToValue = (obj, path, value) => {
-      var i;
-      path = path.split(".");
-      for (i = 0; i < path.length - 1; i++) {
-        if (obj[path[i]]) {
-          obj = obj[path[i]];
-        } else {
-          obj[path[i]] = {};
-          obj = obj[path[i]];
-        }
-      }
+    const previous = this.deepGetValue(this, path);
+    obj = this.deepSetValue(obj, path, value, setRelative);
+    const current = this.deepGetValue(this, path);
 
-      if (setRelative) {
-        // console.log("DURING SET_TO", obj);
-        // console.log(
-        //   "DURING SET_TO",
-        //   typeof obj[path[i]] == "number",
-        //   !isNaN(Number(value)),
-        //   value
-        // );
-        if (typeof obj[path[i]] == "number" && !isNaN(Number(value))) {
-          obj[path[i]] += Number(value);
-        } else if (
-          typeof obj[path[i]] == "object" &&
-          typeof value == "object"
-        ) {
-          obj[path[i]] = Object.assign(obj[path[i]], value);
-        }
-      } else {
-        obj[path[i]] = value;
-      }
-    };
-    setToValue(obj, path, value);
-    // console.log("DURING SET_TO", obj.data.core.health);
+    // console.log({ current, previous });
+
+    this.triggerOnChangeEvents(path, current, previous);
     this.Board().applyNode(this.id, obj);
   };
 
@@ -156,6 +145,44 @@ class Node {
         this.addFlag(flag.required[i]);
       }
     }
+  };
+
+  deepGetValue = (obj, path) => {
+    var i;
+    path = path.split(".");
+    for (i = 0; i < path.length - 1; i++) {
+      if (obj[path[i]]) {
+        obj = obj[path[i]];
+      } else {
+        obj[path[i]] = {};
+        obj = obj[path[i]];
+      }
+    }
+    return obj[path[i]];
+  };
+  // Helpers
+  deepSetValue = (obj, path, value, setRelative) => {
+    var i;
+    path = path.split(".");
+    for (i = 0; i < path.length - 1; i++) {
+      if (obj[path[i]]) {
+        obj = obj[path[i]];
+      } else {
+        obj[path[i]] = {};
+        obj = obj[path[i]];
+      }
+    }
+
+    if (setRelative) {
+      if (typeof obj[path[i]] == "number" && !isNaN(Number(value))) {
+        obj[path[i]] += Number(value);
+      } else if (typeof obj[path[i]] == "object" && typeof value == "object") {
+        obj[path[i]] = Object.assign(obj[path[i]], value);
+      }
+    } else {
+      obj[path[i]] = value;
+    }
+    return obj;
   };
 }
 

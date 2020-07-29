@@ -25,6 +25,26 @@ const Flags = {
       // endOfTurn: (Board, node) => {},
     },
   },
+  isRPGified: {
+    name: "isUnit",
+    showFlag: true,
+    overrideStats: null,
+    modifiers: null,
+    check: null,
+    required: [],
+    events: {
+      onFlagApplied: (Board, node) => {
+        node.setProp("data.core.rpg", {
+          strength: 5,
+          dexterity: 5,
+          constitution: 5,
+          xp: 0,
+          xpToNextLevel: 100,
+          proficiency: {},
+        });
+      },
+    },
+  },
   isKillable: {
     name: "isUnit",
     showFlag: true,
@@ -41,6 +61,12 @@ const Flags = {
         if (node.data.core.health <= 0) {
           Board().deleteNode(node.id);
         }
+      },
+      onPropChanged: {
+        path: "data.core.health",
+        do: (current, previous) => {
+          // Add xp to endurance rating for example...
+        },
       },
     },
   },
