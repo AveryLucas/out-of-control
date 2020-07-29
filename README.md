@@ -1,5 +1,19 @@
 ## Untitled idle war game I suppose..
 
+### Todo Tomorrow
+
+- **Combat Improvements**
+  - RPG stats planned.
+    - **Strength** physical damage calculations / carry weight
+    - **Dexterity** physical damage calculations for some weapons, hit-chance calculation
+    - **Constitution** health
+    - **Intelligence**
+    - **Charisma**
+    - **Luck**
+  - Hitchance Calculations
+  - Damage Calculations
+  - **Perceived Threat**. Each unit has a threat level based on how strong their equiped weapons are, armor rating and flare, agility, and the number of enemy units vs friendly units in the area.
+
 ### Changelog. WooHoo!
 
 - 0.0.1
