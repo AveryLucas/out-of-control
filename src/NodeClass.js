@@ -22,7 +22,7 @@ class Node {
     // console.log("Init");
   };
 
-  triggerEvent = (event) => {
+  triggerEvent = (event, ...args) => {
     const populatedFlags = this.getPopulatedFlags();
     const stateActions = populatedFlags.filter((flag) => {
       if (flag.events && flag.events[event]) {
@@ -30,7 +30,7 @@ class Node {
       }
     });
     for (var i = 0; i < stateActions.length; i++) {
-      stateActions[i].events[event](this.Board, this);
+      stateActions[i].events[event](this.Board, this, args);
     }
     this.Board().applyNode(this.id, this);
   };
